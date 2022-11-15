@@ -2,4 +2,6 @@
 import pymongo
 
 # 本地服务器
-client = pymongo.MongoClient("172.19.237.129", 27017)
+# client = pymongo.MongoClient("172.19.0237.129", 27017)
+# 下班后的mongo
+client = pymongo.MongoClient("127.0.0.1", 27017)

@@ -19,7 +19,4 @@ def get_password_hash(password):
 
 
 if __name__ == '__main__':
-    # 测试用的Bob的密码是 "1234"
-    x = get_password_hash("1234")
-    print(x)
-    print(verify_password("1234", x))
+    print(get_password_hash("1234"))
