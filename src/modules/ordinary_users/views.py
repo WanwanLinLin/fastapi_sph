@@ -1,22 +1,22 @@
 # -*- coding：utf-8 -*-
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from . import schemas
 from .models import User
+from utils import verify_password
 
 router = APIRouter(
     prefix="/v1/users",
     tags=["users module"],
-    responses={404: {"description": "Not found"}},
+    responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
 
 
 @router.post("/login", responses={
-    200: {"description": "Success"}
+    status.HTTP_200_OK: {"description": "Success"}
 })
 async def login(info: schemas.UserLogin):
-    user = User.find_one({"username": info.username, "password": info.password})
-    if not user:
-        raise HTTPException(status_code=404, detail="Users not found")
+    verify_password(info.password, User, info.username)
+
     return {
         "username": info.username,
         "x-token": info.password,
