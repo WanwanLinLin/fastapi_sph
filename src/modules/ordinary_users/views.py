@@ -1,9 +1,13 @@
 # -*- coding：utf-8 -*-
+import re
+import random
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from . import schemas
 from .models import User
-from nosql_db import r
-from utils import verify_password, create_access_token, verify_jwt_access, success
+from nosql_db import r, r_4
+from utils import (verify_password, create_access_token, verify_jwt_access, success,
+                   customize_error_response, get_password_hash)
 
 router = APIRouter(
     prefix="/v1/users",
@@ -73,6 +77,39 @@ async def register(new_user_info: schemas.UserRegister):
     # User.insert_one(info)
     # return success(None)
     return success(info)
+
+
+# 获取注册验证码的接口
+@router.get("/passport/sendCode/{phone}", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+})
+async def send_a_code_to_phone(phone: str):
+    ret = re.match(r'^1[356789]\d{9}$', phone)
+    if not ret:
+        customize_error_response(status.HTTP_400_BAD_REQUEST, "Sorry, the phone number format is incorrect!")
+    phone_ = User.find_one({"phone_number": phone})
+    if phone_:
+        customize_error_response(status.HTTP_400_BAD_REQUEST, "Sorry, this mobile number has been registered!")
+    # 暂时生成随机验证码
+    random_code = "".join([chr(random.randrange(ord('0'), ord('9') + 1)) for _ in range(6)])
+    # 使用redis存储随机验证码
+    r_4.setex(phone, 60 * 5, random_code)
+
+    return success(random_code)
+
+
+# 修改用户密码的接口
+@router.put("/passport/edit_password", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+})
+def edit_password(password_info: schemas.ValidateEditPassword, username: str = Depends(verify_jwt_access)):
+    # 测试输入的旧密码是否与数据库中的值匹配
+    verify_password(plain_password=password_info.password_old, db=User, username=username)
+    # 将新密码哈希并存到数据库中
+    hash_new_password = get_password_hash(password_info.password_new)
+    User.update_one({"username": username}, {"$set": {"password": hash_new_password}})
+
+    return success(None)
 
 
 @router.get("/testjwt", dependencies=[Depends(verify_jwt_access)])
