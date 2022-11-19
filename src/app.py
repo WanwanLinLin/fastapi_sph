@@ -4,14 +4,16 @@ import uvicorn
 from fastapi import FastAPI
 # from modules import users_router
 from db import Base, engine
-from modules import users_router
 from fastapi.responses import PlainTextResponse, JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from modules import users_router, manage_goods_router
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.include_router(users_router)
+app.include_router(manage_goods_router)
 
 
 # 重写HTTPException处理程序

@@ -38,8 +38,27 @@ if __name__ == '__main__':
     Base.metadata.create_all(bind=engine)
     session = SessionLocal()
 
-    q = session.query(FirstCategory).filter(FirstCategory.id == 1).first()
-    for i in q.owner:
-        for j in i.owner:
-            print(j.category_name)
+    # q = session.query(FirstCategory).filter(FirstCategory.id == 1).first()
+    # for i in q.owner:
+    #     for j in i.owner:
+    #         print(j.category_name)
+    import json
 
+    data = []
+    dict_ = {}
+    q = session.query(FirstCategory).all()
+    for every_first_category in q:
+        dict_.update({"categoryName": every_first_category.category_name,
+                      "categoryId": every_first_category.id,
+                      "categoryChild": []})
+        for i, every_second_category in enumerate(every_first_category.owner):
+            dict_["categoryChild"].append({"categoryName": every_second_category.category_name,
+                                           "categoryId": every_second_category.id,
+                                           "categoryChild": []})
+            for every_third_category in every_second_category.owner:
+                dict_["categoryChild"][i]["categoryChild"].append({"categoryName": every_third_category.category_name,
+                                                                   "categoryId": every_third_category.id,
+                                                                   })
+        data.append(dict_)
+        dict_ = {}
+    print(data)
