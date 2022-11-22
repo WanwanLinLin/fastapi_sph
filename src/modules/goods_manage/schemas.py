@@ -23,7 +23,7 @@ class ValidateList(BaseModel):
     @validator("category1Id")
     def is_exists(cls, v):
         if not v:
-            return v.title()
+            return
         data = session.query(FirstCategory).filter(FirstCategory.id == int(v)).first()
         if not data:
             raise customize_error_response(code=status.HTTP_404_NOT_FOUND,
@@ -33,7 +33,7 @@ class ValidateList(BaseModel):
     @validator("category2Id")
     def is_exists2(cls, v):
         if not v:
-            return v.title()
+            return
         data = session.query(SecondCategory).filter(SecondCategory.id == int(v)).first()
         if not data:
             raise customize_error_response(code=status.HTTP_404_NOT_FOUND,
@@ -44,7 +44,7 @@ class ValidateList(BaseModel):
     def is_exists3(cls, v):
         # v 为 " " 的情况
         if not v:
-            return v.title()
+            return
         data = session.query(ThirdCategory).filter(ThirdCategory.id == int(v)).first()
         if not data:
             raise customize_error_response(code=status.HTTP_404_NOT_FOUND,
