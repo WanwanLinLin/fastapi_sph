@@ -1,15 +1,17 @@
 # -*- coding：utf-8 -*-
 import re
+import time
 import random
 import uvicorn
 import schemas
 
-from models import User
 from nosql_db import r, r_4
+from models import (Orders, Portfolios, NFT_list, Comments,
+                     Portfolios_like, Shipping_address, User, Goods_se_details_sku)
 from fastapi.responses import PlainTextResponse, JSONResponse
 from fastapi import Depends, HTTPException, status, FastAPI, Header
 from utils import (verify_password, create_access_token, verify_jwt_access, success,
-                   customize_error_response, get_password_hash, get_user_jwt)
+                   customize_error_response, get_password_hash, get_user_jwt, create_numbering)
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
@@ -27,6 +29,68 @@ async def http_exception_handler(request, exc):
 @trade_app.get("/addToCart/{sku_id}/{sku_num}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
-async def add_to_cart(sku_id:str, sku_num: str, uuid_: str = Header()):
+async def add_to_cart(sku_id: str, sku_num: str,
+                      userTempId: str = Header(), x_token: str = Header()):
+    # 以下为数据库字段
+    sku_id = int(sku_id)
+    sku_num = int(sku_num)
 
-    pass
+    # 第一种情况：用户已经登录
+    if x_token:
+        # 验证token
+        username = await verify_jwt_access(x_token)
+        goods = Goods_se_details_sku.find_one({"id": sku_id})
+        default_img = goods["defualtImg"]
+        # 订单表与商品表关联的id
+        connect_goods_se_sku_id = goods["id"]
+        name = goods["skuName"]
+        purchase_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        price = int(goods["price"])
+        payment = price * sku_num
+        order_number = create_numbering(16)
+        status = "To_Be_Delivered"
+
+        origin_order = Orders.find_one({"name": name, "userTempId": x_token})
+        # 若初始订单存在，则修改订单
+        if origin_order:
+            # 根据前端要求，返回三种不同的状态
+            if sku_num == 1 or sku_num == -1 or sku_num == 0:
+                # 删除或增加商品数量时修改产品的总价格
+                payment += origin_order["payment"]
+                # 删除或增加商品数量时修改产品的总数量
+                sku_num += origin_order["purchase_num"]
+            else:
+                # 删除或增加商品数量时修改产品的总价格
+                payment += origin_order["payment"]
+                # 删除或增加商品数量时修改产品的总数量
+                sku_num += origin_order["purchase_num"]
+
+            Orders.update_one({"name": name, "userTempId": x_token},
+                              {"$set": {"purchase_time": purchase_time,
+                                        "purchase_num": sku_num,
+                                        "price": price,
+                                        "payment": payment,
+                                        }})
+
+        # 若初始订单不存在，则增加订单
+        else:
+            Orders.insert_one({"purchase_time": purchase_time,
+                               "purchase_num": sku_num,
+                               "price": price,
+                               "payment": payment,
+                               "status": status,
+                               "order_number": order_number,
+                               "name": name,
+                               "connect_goods_se_id": connect_goods_se_sku_id,
+                               "userTempId": x_token,
+                               "default_img": default_img,
+                               "isChecked": 0,
+                               "isOrdered": 0,
+                               })
+
+
+    return success(None)
+
+
+if __name__ == '__main__':
+    uvicorn.run(trade_app, port=6668)
