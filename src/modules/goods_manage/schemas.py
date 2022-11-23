@@ -26,8 +26,8 @@ class ValidateList(BaseModel):
             return
         data = session.query(FirstCategory).filter(FirstCategory.id == int(v)).first()
         if not data:
-            raise customize_error_response(code=status.HTTP_404_NOT_FOUND,
-                                           error_message="Sorry, the ID of this first level category does not exist!")
+            customize_error_response(code=status.HTTP_404_NOT_FOUND,
+                                     error_message="Sorry, the ID of this first level category does not exist!")
         return v.title()
 
     @validator("category2Id")
@@ -36,8 +36,8 @@ class ValidateList(BaseModel):
             return
         data = session.query(SecondCategory).filter(SecondCategory.id == int(v)).first()
         if not data:
-            raise customize_error_response(code=status.HTTP_404_NOT_FOUND,
-                                           error_message="Sorry, the ID of this second level category does not exist!")
+            customize_error_response(code=status.HTTP_404_NOT_FOUND,
+                                     error_message="Sorry, the ID of this second level category does not exist!")
         return v.title()
 
     @validator("category3Id")
@@ -47,7 +47,6 @@ class ValidateList(BaseModel):
             return
         data = session.query(ThirdCategory).filter(ThirdCategory.id == int(v)).first()
         if not data:
-            raise customize_error_response(code=status.HTTP_404_NOT_FOUND,
-                                           error_message="Sorry, the ID of this third level category does not exist!")
+            customize_error_response(code=status.HTTP_404_NOT_FOUND,
+                                     error_message="Sorry, the ID of this third level category does not exist!")
         return v.title()
-

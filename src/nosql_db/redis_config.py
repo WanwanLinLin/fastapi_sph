@@ -1,16 +1,16 @@
 # -*- coding：utf-8 -*-
 import redis
 
-# pool = redis.ConnectionPool(host="172.23.31.246", port=6379, db=3, decode_responses=True)
-# pool_2 = redis.ConnectionPool(host="172.23.31.246", port=6379, db=2, decode_responses=True)
-# pool_3 = redis.ConnectionPool(host="172.23.31.246", port=6379, db=1, decode_responses=True)
-# pool_4 = redis.ConnectionPool(host="172.23.31.246", port=6379, db=4, decode_responses=True)
+pool = redis.ConnectionPool(host="192.168.59.87", port=6379, db=3, decode_responses=True)
+pool_2 = redis.ConnectionPool(host="192.168.59.87", port=6379, db=2, decode_responses=True)
+pool_3 = redis.ConnectionPool(host="192.168.59.87", port=6379, db=1, decode_responses=True)
+pool_4 = redis.ConnectionPool(host="192.168.59.87", port=6379, db=4, decode_responses=True)
 
-# 下班后的redis
-pool = redis.ConnectionPool(host="127.0.0.1", port=6379, db=3, decode_responses=True)
-pool_2 = redis.ConnectionPool(host="127.0.0.1", port=6379, db=2, decode_responses=True)
-pool_3 = redis.ConnectionPool(host="127.0.0.1", port=6379, db=1, decode_responses=True)
-pool_4 = redis.ConnectionPool(host="127.0.0.1", port=6379, db=4, decode_responses=True)
+# # 下班后的redis
+# pool = redis.ConnectionPool(host="127.0.0.1", port=6379, db=3, decode_responses=True)
+# pool_2 = redis.ConnectionPool(host="127.0.0.1", port=6379, db=2, decode_responses=True)
+# pool_3 = redis.ConnectionPool(host="127.0.0.1", port=6379, db=1, decode_responses=True)
+# pool_4 = redis.ConnectionPool(host="127.0.0.1", port=6379, db=4, decode_responses=True)
 
 
 # 连接 redis 数据库

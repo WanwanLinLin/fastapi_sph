@@ -33,7 +33,12 @@ def create_access_token(username: str, password: str):
 async def get_current_user(db: redis, token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail={
+            "code": status.HTTP_401_UNAUTHORIZED,
+            "message": "Could not validate credentials",
+            "data": None,
+            "ok": False
+        },
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -55,6 +60,13 @@ async def get_current_user(db: redis, token: str = Depends(oauth2_scheme)):
 async def verify_jwt_access(x_token: str = Header()):
     username = await get_current_user(r, x_token)
     return username
+
+
+# 暂时从这里获取token,微服务搭建可能会用到
+async def get_user_jwt(x_token: str = Header()):
+    # 验证这个token对不对
+    await get_current_user(r, x_token)
+    return x_token
 
 
 if __name__ == '__main__':

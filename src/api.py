@@ -2,21 +2,24 @@
 import json
 import requests
 import uvicorn
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, Depends
 # from modules import users_router
 from db import Base, engine
 from fastapi.responses import PlainTextResponse, JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from modules import users_router, ValidateList
+from modules import ValidateList, UserLogin, UserRegister, ValidatePhone, ValidateEditPassword
+from utils import verify_jwt_access, get_user_jwt
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-app.include_router(users_router)
 
-# 商品微服务
-GOODS_SERVICE_URL = "http://127.0.0.1:6666"
+# 商品管理微服务
+GOODS_SERVICE_URL = "http://localhost:6666"
+
+# 用户管理微服务
+USERS_SERVICE_URL = "http://localhost:6667"
 
 
 # 重写HTTPException处理程序
@@ -31,20 +34,20 @@ async def main():
     return {"message": "There will be a fastapi project"}
 
 
-# ### 构建商品微服务
+# ############################################## 构建商品微服务 ###################################################
 # 返回所有类别列表数据(三级联动)的接口
 @app.get("/v1/goods/getBaseCategoryList", responses={
-    status.HTTP_200_OK: {"description": "Success"}})
-async def get_base_category_list():
-    result = requests.post(url=f"{GOODS_SERVICE_URL}/getBaseCategoryList")
+    status.HTTP_200_OK: {"description": "Success"}}, tags=["Manage goods module"])
+def get_base_category_list():
+    result = requests.get(url=f"{GOODS_SERVICE_URL}/getBaseCategoryList")
 
     return result.json()
 
 
 # 展示商品列表的接口
 @app.post("/v1/goods/list", responses={
-    status.HTTP_200_OK: {"description": "Success"}})
-async def display_goods_list(goods_info: ValidateList):
+    status.HTTP_200_OK: {"description": "Success"}}, tags=["Manage goods module"])
+def display_goods_list(goods_info: ValidateList):
     data = {
         "category1Id": goods_info.category1Id,
         "category2Id": goods_info.category2Id,
@@ -57,8 +60,6 @@ async def display_goods_list(goods_info: ValidateList):
         "pageNo": goods_info.pageNo,
         "pageSize": goods_info.pageSize
     }
-    print(data)
-
     result = requests.post(url=f"{GOODS_SERVICE_URL}/list",
                            json=data)
 
@@ -67,11 +68,92 @@ async def display_goods_list(goods_info: ValidateList):
 
 # 展示商品详情的接口
 @app.get("/v1/goods/item/{sku_id}", responses={
-    status.HTTP_200_OK: {"description": "Success"}})
-async def show_goods_detail(sku_id: int):
+    status.HTTP_200_OK: {"description": "Success"}}, tags=["Manage goods module"])
+def show_goods_detail(sku_id: int):
     result = requests.get(url=f"{GOODS_SERVICE_URL}/item/{sku_id}")
 
     return result.json()
 
-if __name__ == '__main__':
-    uvicorn.run(app)
+
+# ############################################## 构建用户微服务 ###################################################
+# 用户登录的接口
+@app.post("/v1/users/passport/login", responses={
+    status.HTTP_200_OK: {"description": "Success"}},
+          tags=["users module"])
+def login(info: UserLogin):
+    data = {
+        "username": info.username,
+        "password": info.password
+    }
+    result = requests.post(url=f"{USERS_SERVICE_URL}/passport/login", json=data)
+
+    return result.json()
+
+
+# 用户登录成功后获取用户信息的接口
+@app.get("/v1/users/passport/auth/getUserInfo", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["users module"], dependencies=[Depends(verify_jwt_access)])
+async def get_user_info(x_token: str = Depends(get_user_jwt)):
+    headers = {
+        "x-token": x_token
+    }
+    result = requests.get(url=f"{USERS_SERVICE_URL}/passport/auth/getUserInfo",
+                          headers=headers)
+
+    return result.json()
+
+
+# 用户退出登录后清除用户信息的接口
+@app.get("/v1/users/passport/logout", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["users module"], dependencies=[Depends(verify_jwt_access)])
+async def get_user_info(x_token: str = Depends(get_user_jwt)):
+    headers = {
+        "x-token": x_token
+    }
+
+    result = requests.get(url=f"{USERS_SERVICE_URL}/passport/logout",
+                          headers=headers)
+
+    return result.json()
+
+
+# 新用户注册的接口
+@app.post("/v1/users/passport/register", responses={
+    status.HTTP_200_OK: {"description": "Success"}},
+          tags=["users module"])
+async def register(new_user: UserRegister):
+    data = {
+        "username": new_user.username,
+        "password": new_user.password,
+        "password1": new_user.password1,
+        "nick_name": new_user.nick_name,
+        "age": new_user.age,
+        "wallet_address": new_user.wallet_address,
+        "email": new_user.email,
+        "code": str
+    }
+
+    result = requests.post(url=f"{USERS_SERVICE_URL}/passport/register", json=data)
+
+    return result.json()
+
+
+# 修改用户密码的接口
+@app.put("/v1/users/passport/edit_password", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["users module"], dependencies=[Depends(verify_jwt_access)])
+async def get_user_info(x_token: str = Depends(get_user_jwt)):
+    headers = {
+        "x-token": x_token
+    }
+
+    result = requests.get(url=f"{USERS_SERVICE_URL}/passport/edit_password",
+                          headers=headers)
+
+    return result.json()
+
+
+# ############################################## 构建交易管理微服务 ###################################################
+

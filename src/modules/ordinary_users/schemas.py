@@ -1,11 +1,15 @@
 # -*- coding：utf-8 -*-
 import re
 from nosql_db import r_4
-from .models import User
+# from .models import User
+from nosql_db import client
 from typing import List, Union, Optional
 from pydantic import BaseModel, Field, validator
 from fastapi import HTTPException, status
 from utils import customize_error_response
+
+# 用户登录注册集合
+User = client.users.information
 
 
 class UserLogin(BaseModel):

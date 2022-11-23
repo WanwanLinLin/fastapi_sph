@@ -7,10 +7,20 @@ from db import FirstCategory, SessionLocal
 from fastapi import APIRouter, Depends, status, HTTPException, FastAPI
 from models import Goods, Goods_se_attrs, Goods_se_details_sku, Goods_se_details
 from utils import customize_error_response
+from fastapi.responses import PlainTextResponse, JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 
 session = SessionLocal()
 
 goods_app = FastAPI()
+
+
+# 重写HTTPException处理程序
+@goods_app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request, exc):
+    # return PlainTextResponse(json.dumps(exc.detail), status_code=exc.status_code)
+    return JSONResponse(exc.detail, status_code=exc.status_code)
 
 
 # 返回所有类别列表数据(三级联动)的接口
