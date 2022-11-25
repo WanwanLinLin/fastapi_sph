@@ -20,10 +20,10 @@ class TokenData(BaseModel):
     username: Union[str, None] = None
 
 
-def create_access_token(username: str, password: str):
+def create_access_token(username: str, hash_password: str):
     payload = {
         "username": username,
-        "password": password
+        "password": hash_password
     }
 
     encoded_jwt = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)

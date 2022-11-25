@@ -25,8 +25,8 @@ def verify_password(plain_password: str, db, username: str):
                                 "ok": False
 
                             })
-    # 验证成功，返回一个用户对象
-    return user
+    # 验证成功，返回用户对象和加密后的密码
+    return user, hashed_password
 
 
 def get_password_hash(password):

@@ -56,6 +56,9 @@ class UserRegister(ValidatePhone):
 
     @validator("wallet_address")
     def ten_thirty(cls, v):
+        if not v:
+            return
+
         if len(v) < 10 or len(v) > 30:
             raise ValueError('Sorry, the wallet address is too long or too short!')
         return v
@@ -87,6 +90,9 @@ class UserRegister(ValidatePhone):
 
     @validator("email")
     def match_email(cls, v):
+        if not v:
+            return
+
         ret = re.match(r"^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){0,4}@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){0,4}$", v)
         if not ret:
             raise ValueError("Sorry, the format of the email account is incorrect!")

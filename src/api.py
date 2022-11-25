@@ -126,13 +126,14 @@ async def get_user_info(x_token: str = Depends(get_user_jwt)):
 async def register(new_user: UserRegister):
     data = {
         "username": new_user.username,
+        "phone": new_user.phone,
         "password": new_user.password,
         "password1": new_user.password1,
         "nick_name": new_user.nick_name,
         "age": new_user.age,
         "wallet_address": new_user.wallet_address,
         "email": new_user.email,
-        "code": str
+        "code": new_user.code
     }
 
     result = requests.post(url=f"{USERS_SERVICE_URL}/passport/register", json=data)
