@@ -1,3 +1,3 @@
-import math
+import uuid
 
-print(math.ceil(3 / 2))
+print(uuid.uuid4())

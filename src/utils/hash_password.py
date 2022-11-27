@@ -34,4 +34,4 @@ def get_password_hash(password):
 
 
 if __name__ == '__main__':
-    print(get_password_hash("yyy555"))
+    print(get_password_hash("linwan"))
