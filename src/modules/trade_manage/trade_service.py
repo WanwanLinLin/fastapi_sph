@@ -1,12 +1,13 @@
 # -*- coding：utf-8 -*-
 import re
 import time
+import json
 import random
 import uvicorn
 import schemas
 
 from typing import Union
-from nosql_db import r,r_2, r_4
+from nosql_db import r, r_2, r_4
 from models import (Orders, Portfolios, NFT_list, Comments,
                     Portfolios_like, Shipping_address, User, Goods_se_details_sku)
 from fastapi.responses import PlainTextResponse, JSONResponse
@@ -182,7 +183,7 @@ async def query_cart_list(userTempId: str = Header(),
     return success(data)
 
 
-# 取消订单的接口
+# 删除购物车中商品的接口
 @trade_app.delete("/deleteCart/{sku_id}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
@@ -272,12 +273,12 @@ async def get_order_transaction_information(username: str = Depends(verify_jwt_a
             "hasStock": True
         })
 
-    # #  生成结算订单后将每条订单的isOrdered字段置为1
-    # Orders.update_many({"userTempId": x_token,
-    #                     "isChecked": 1,
-    #                     "isOrdered": 0,
-    #                     "isCanceled": 0},
-    #                    {"$set": {"isOrdered": 1}})
+    #  生成结算订单后将每条订单的isOrdered字段置为1
+    Orders.update_many({"userTempId": x_token,
+                        "isChecked": 1,
+                        "isOrdered": 0,
+                        "isCanceled": 0},
+                       {"$set": {"isOrdered": 1}})
 
     # 整合到data里面
     data = {
@@ -300,12 +301,46 @@ async def get_order_transaction_information(order_info: schemas.SubmitOrder,
                                             x_token: str = Depends(get_user_jwt),
                                             tradeNo: str = Header()):
     # 如果订单号已经存在，则返回错误信息
-    info = r_2.hgetall(tradeNo)
-    if info:
+    order_is_exists = r_2.hgetall(tradeNo)
+    if order_is_exists:
         customize_error_response(code=400,
                                  error_message="Sorry, this order number already exists!")
+    # 获取提交的订单的详细信息
+    submit_order_detail = dict(order_info)
+    # 将提交的订单信息以hash形式存到redis中,使用hash
+    for x_ in submit_order_detail:
+        r_2.hset(tradeNo, x_, json.dumps(submit_order_detail[x_]))
 
-    return
+    # 将token:订单号 以list类型存到redis中，作为唯一标识符,使用List
+    # (因为每一个用户可能有多个订单)
+    r_2.rpush(x_token, tradeNo)
+    r_2.expire(x_token, 60 * 60)
+    r_2.expire(tradeNo, 60 * 60)
+
+    return success(tradeNo)
+
+
+# 获取订单支付信息的接口
+@trade_app.get("/payment/weixin/createNative/{order_id}", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"], dependencies=[Depends(verify_jwt_access)])
+async def get_order_payment_info(order_id: str):
+    # 从redis中获取订单列表的总价格
+    order_list = r_2.hget(order_id, "orderDetailList")
+    order_list = json.loads(order_list)
+    total_price = 0
+    # 计算总价格
+    for x_ in order_list:
+        total_price += int(x_["orderPrice"])
+
+    data = {
+        "codeUrl": "weixin://wxpay/bizpayurl?pr=P0aPBJK",
+        "orderId": order_id,
+        "totalFee": total_price,
+        "resultCode": "SUCCESS"
+    }
+
+    return success(data)
 
 
 if __name__ == '__main__':
