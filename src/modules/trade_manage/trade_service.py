@@ -1,4 +1,5 @@
 # -*- coding：utf-8 -*-
+import math
 import re
 import time
 import json
@@ -13,8 +14,10 @@ from models import (Orders, Portfolios, NFT_list, Comments,
 from fastapi.responses import PlainTextResponse, JSONResponse
 from fastapi import Depends, HTTPException, status, FastAPI, Header
 from utils import (verify_password, create_access_token, verify_jwt_access, success,
-                   customize_error_response, get_password_hash, get_user_jwt, create_numbering)
+                   customize_error_response, get_password_hash, get_user_jwt, create_numbering,
+                   get_order_code)
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from datetime import datetime, timedelta
 
 trade_app = FastAPI()
 
@@ -296,10 +299,9 @@ async def get_order_transaction_information(username: str = Depends(verify_jwt_a
 @trade_app.post("/auth/submitOrder", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
-async def get_order_transaction_information(order_info: schemas.SubmitOrder,
-                                            username: str = Depends(verify_jwt_access),
-                                            x_token: str = Depends(get_user_jwt),
-                                            tradeNo: str = Header()):
+async def get_order_transaction_information(tradeNo: str,
+                                            order_info: schemas.SubmitOrder,
+                                            x_token: str = Depends(get_user_jwt)):
     # 如果订单号已经存在，则返回错误信息
     order_is_exists = r_2.hgetall(tradeNo)
     if order_is_exists:
@@ -314,8 +316,8 @@ async def get_order_transaction_information(order_info: schemas.SubmitOrder,
     # 将token:订单号 以list类型存到redis中，作为唯一标识符,使用List
     # (因为每一个用户可能有多个订单)
     r_2.rpush(x_token, tradeNo)
-    r_2.expire(x_token, 60 * 60)
-    r_2.expire(tradeNo, 60 * 60)
+    r_2.expire(x_token, 60 * 60 * 24 * 7)
+    r_2.expire(tradeNo, 60 * 60 * 24 * 7)
 
     return success(tradeNo)
 
@@ -338,6 +340,82 @@ async def get_order_payment_info(order_id: str):
         "orderId": order_id,
         "totalFee": total_price,
         "resultCode": "SUCCESS"
+    }
+
+    return success(data)
+
+
+# 查询订单支付状态的接口
+@trade_app.get("/weixin/queryPayStatus/{order_id}", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"], dependencies=[Depends(verify_jwt_access)])
+async def check_pay_status(order_id: str):
+    pay_info = r_2.hgetall(order_id)
+    if not pay_info:
+        customize_error_response(code=205,
+                                 error_message="Sorry, payment timeout!")
+    # 其余流程待开发
+
+    return success(None)
+
+
+# 在个人中心展示订单列表的接口
+@trade_app.get("/order/auth/{page}/{limit}", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"])
+async def show_order_in_personal_center(page: str, limit: str,
+                                        x_token: str = Depends(get_user_jwt),
+                                        username: str = Depends(verify_jwt_access)):
+    # 准备好构造条件
+    records: list = []
+    user_id = User.find_one({"username": username})["id"]
+    page = int(page)
+    limit = int(limit)
+
+    # 获取该用户所有订单的列表
+    get_all_order_list_by_token = r_2.lrange(x_token, 0, -1)
+    total = len(get_all_order_list_by_token)
+
+    # 自定义响应结构
+    for i, x_ in enumerate(get_all_order_list_by_token, start=1):
+        user_order = r_2.hgetall(x_)
+        order_detail_list = json.loads(user_order["orderDetailList"])
+        records.append({
+            "id": i,
+            "consignee": json.loads(user_order["consignee"]),
+            "consigneeTel": json.loads(user_order["consigneeTel"]),
+            "totalAmount": sum([int(x_["orderPrice"]) for x_ in order_detail_list]),
+            "orderStatus": "UNPAID",
+            "userId": user_id,
+            "paymentWay": json.loads(user_order["paymentWay"]),
+            "deliveryAddress": json.loads(user_order["deliveryAddress"]),
+            "orderComment": json.loads(user_order["orderComment"]),
+            "outTradeNo": get_order_code(),
+            "tradeBody": [x_["skuName"] for x_ in order_detail_list][0],
+            "createTime": str(datetime.now().replace(microsecond=0)),
+            "expireTime": str(datetime.now().replace(microsecond=0) + timedelta(days=1)),
+            "processStatus": "UNPAID",
+            "trackingNo": None,
+            "parentOrderId": None,
+            "imgUrl": [x_["imgUrl"] for x_ in order_detail_list][0],
+            "orderDetailList": order_detail_list,
+            "orderStatusName": "未支付",
+            "wareId": None
+        })
+
+    # 首页默认分页效果
+    limit_start = (page - 1) * limit
+    # 采用切片方式方便分页
+    records = records[limit_start:page * limit]
+    # 获取分页总数
+    page_total = int(math.ceil(total / limit))
+
+    data = {
+        "records": records,
+        "total": total,
+        "size": limit,
+        "current": page,
+        "pages": page_total
     }
 
     return success(data)

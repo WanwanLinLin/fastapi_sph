@@ -2,13 +2,16 @@
 import json
 import requests
 import uvicorn
-from fastapi import FastAPI, status, Depends
+
+from typing import Union
+from fastapi import FastAPI, status, Depends, Header
 # from modules import users_router
 from db import Base, engine
 from fastapi.responses import PlainTextResponse, JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from modules import ValidateList, UserLogin, UserRegister, ValidatePhone, ValidateEditPassword
+from modules import (ValidateList, UserLogin, UserRegister, ValidatePhone, ValidateEditPassword,
+                     SubmitOrder)
 from utils import verify_jwt_access, get_user_jwt
 
 Base.metadata.create_all(bind=engine)
@@ -20,6 +23,9 @@ GOODS_SERVICE_URL = "http://localhost:6666"
 
 # 用户管理微服务
 USERS_SERVICE_URL = "http://localhost:6667"
+
+# 商品交易管理微服务
+TRADE_SERVICE_URL = "http://localhost:6668"
 
 
 # 重写HTTPException处理程序
@@ -158,3 +164,162 @@ async def get_user_info(x_token: str = Depends(get_user_jwt)):
 
 # ############################################## 构建交易管理微服务 ###################################################
 
+# 增加订单的接口
+@app.get("/v1/goods/addToCart/{sku_id}/{sku_num}", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"])
+async def add_to_cart(sku_id: str, sku_num: str,
+                      userTempId: str = Header(),
+                      x_token: Union[str, None] = Header(default=None)):
+    headers = {
+        "x-token": x_token,
+        "userTempId": userTempId
+    }
+
+    result = requests.get(url=f"{TRADE_SERVICE_URL}/addToCart/{sku_id}/{sku_num}",
+                          headers=headers)
+
+    return result.json()
+
+
+# 查询购物车中订单的接口
+@app.get("/v1/goods/cartList", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"])
+async def query_cart_list(userTempId: str = Header(),
+                          x_token: Union[str, None] = Header(default=None)):
+    headers = {
+        "x-token": x_token,
+        "userTempId": userTempId
+    }
+
+    result = requests.get(url=f"{TRADE_SERVICE_URL}/cartList",
+                          headers=headers)
+
+    return result.json()
+
+
+# 删除购物车中商品的接口
+@app.delete("/v1/goods/deleteCart/{sku_id}", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"])
+async def cancel_order_in_cart(sku_id: str, userTempId: str = Header(),
+                               x_token: Union[str, None] = Header(default=None)):
+    headers = {
+        "x-token": x_token,
+        "userTempId": userTempId
+    }
+
+    result = requests.delete(url=f"{TRADE_SERVICE_URL}/deleteCart/{sku_id}",
+                             headers=headers)
+
+    return result.json()
+
+
+# 切换订单中商品选中状态的接口
+@app.get("/v1/goods/checkCart/{sku_id}/{is_checked}", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"])
+async def switch_commodity_selection_status(sku_id: str, is_checked: str,
+                                            userTempId: str = Header(),
+                                            x_token: Union[str, None] = Header(default=None)):
+    headers = {
+        "x-token": x_token,
+        "userTempId": userTempId
+    }
+
+    result = requests.get(url=f"{TRADE_SERVICE_URL}/checkCart/{sku_id}/{is_checked}",
+                          headers=headers)
+
+    return result.json()
+
+
+# 生成并获取订单交易页信息的接口(需要权限认证)
+@app.get("/v1/goods/auth/trade", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"])
+async def get_order_transaction_information(x_token: str = Depends(get_user_jwt)):
+    headers = {
+        "x-token": x_token
+    }
+
+    result = requests.get(url=f"{TRADE_SERVICE_URL}/auth/trade",
+                          headers=headers)
+
+    return result.json()
+
+
+# 提交订单的接口
+@app.post("/v1/goods/auth/submitOrder", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"])
+async def get_order_transaction_information(tradeNo: str,
+                                            order_info: SubmitOrder,
+                                            x_token: str = Depends(get_user_jwt)):
+    headers = {
+        "x-token": x_token
+    }
+
+    data = {
+        "consignee": order_info.consignee,
+        "consigneeTel": order_info.consigneeTel,
+        "deliveryAddress": order_info.deliveryAddress,
+        "paymentWay": order_info.paymentWay,
+        "orderComment": order_info.orderComment,
+        "orderDetailList": order_info.orderDetailList
+    }
+
+    params_ = {
+        "tradeNo": tradeNo
+    }
+
+    result = requests.post(url=f"{TRADE_SERVICE_URL}/auth/submitOrder",
+                           headers=headers, params=params_, json=data)
+
+    return result.json()
+
+
+# 获取订单支付信息的接口
+@app.get("/v1/goods/payment/weixin/createNative/{order_id}", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"])
+async def get_order_payment_info(order_id: str, x_token: str = Depends(get_user_jwt)):
+    headers = {
+        "x-token": x_token
+    }
+
+    result = requests.get(url=f"{TRADE_SERVICE_URL}/payment/weixin/createNative/{order_id}",
+                          headers=headers)
+
+    return result.json()
+
+
+# 查询订单支付状态的接口
+@app.get("/v1/goods/weixin/queryPayStatus/{order_id}", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"])
+async def check_pay_status(order_id: str, x_token: str = Depends(get_user_jwt)):
+    headers = {
+        "x-token": x_token
+    }
+
+    result = requests.get(url=f"{TRADE_SERVICE_URL}/weixin/queryPayStatus/{order_id}",
+                          headers=headers)
+
+    return result.json()
+
+
+# 在个人中心展示订单列表的接口
+@app.get("/v1/goods/order/auth/{page}/{limit}", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["trade module"])
+async def show_order_in_personal_center(page: str, limit: str,
+                                        x_token: str = Depends(get_user_jwt)):
+    headers = {
+        "x-token": x_token
+    }
+
+    result = requests.get(url=f"{TRADE_SERVICE_URL}/order/auth/{page}/{limit}",
+                          headers=headers)
+
+    return result.json()
