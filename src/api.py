@@ -18,14 +18,18 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+"""
+用127.0.0.1要比localhost快得多
+"""
+
 # 商品管理微服务
-GOODS_SERVICE_URL = "http://localhost:6666"
+GOODS_SERVICE_URL = "http://127.0.0.1:6666"
 
 # 用户管理微服务
-USERS_SERVICE_URL = "http://localhost:6667"
+USERS_SERVICE_URL = "http://127.0.0.1:6667"
 
 # 商品交易管理微服务
-TRADE_SERVICE_URL = "http://localhost:6668"
+TRADE_SERVICE_URL = "http://127.0.0.1:6668"
 
 
 # 重写HTTPException处理程序
