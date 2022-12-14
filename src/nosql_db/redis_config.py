@@ -5,12 +5,14 @@ pool = redis.ConnectionPool(host="172.23.58.136", port=6379, db=3, decode_respon
 pool_2 = redis.ConnectionPool(host="172.23.58.136", port=6379, db=2, decode_responses=True)
 pool_3 = redis.ConnectionPool(host="172.23.58.136", port=6379, db=1, decode_responses=True)
 pool_4 = redis.ConnectionPool(host="172.23.58.136", port=6379, db=4, decode_responses=True)
+pool_5 = redis.ConnectionPool(host="172.23.58.136", port=6379, db=5, decode_responses=True)
 
 # # 下班后的redis
 # pool = redis.ConnectionPool(host="127.0.0.1", port=6379, db=3, decode_responses=True)
 # pool_2 = redis.ConnectionPool(host="127.0.0.1", port=6379, db=2, decode_responses=True)
 # pool_3 = redis.ConnectionPool(host="127.0.0.1", port=6379, db=1, decode_responses=True)
 # pool_4 = redis.ConnectionPool(host="127.0.0.1", port=6379, db=4, decode_responses=True)
+# pool_5 = redis.ConnectionPool(host="127.0.0.1", port=6379, db=5, decode_responses=True)
 
 
 # 连接 redis 数据库
@@ -22,7 +24,9 @@ r_2 = redis.Redis(connection_pool=pool_2)
 r_3 = redis.Redis(connection_pool=pool_3)
 # 存储手机验证码
 r_4 = redis.Redis(connection_pool=pool_4)
-
+# 用于存储超级管理员的双token
+r_5 = redis.Redis(connection_pool=pool_5)
 
 if __name__ == '__main__':
-    r_4.set('19178521060', '1234')
+    x = r_5.get("111")
+    print(x)

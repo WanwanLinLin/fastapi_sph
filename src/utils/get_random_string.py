@@ -12,4 +12,4 @@ def create_numbering(length=24):
 
 
 if __name__ == '__main__':
-    print(create_numbering(18))
+    print(create_numbering(40))

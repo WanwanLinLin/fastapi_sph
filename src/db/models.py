@@ -1,10 +1,12 @@
 # -*- coding：utf-8 -*-
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
-
 from db import Base
+from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash
 
 
+# 一级类目表
 class FirstCategory(Base):
     __tablename__ = "FirstCategory"
 
@@ -14,6 +16,7 @@ class FirstCategory(Base):
     owner = relationship("SecondCategory", backref="FirstCategory")
 
 
+# 二级类目表
 class SecondCategory(Base):
     __tablename__ = "SecondCategory"
 
@@ -24,6 +27,7 @@ class SecondCategory(Base):
     owner = relationship("ThirdCategory", backref="SecondCategory")
 
 
+# 三级类目表
 class ThirdCategory(Base):
     __tablename__ = "ThirdCategory"
 
@@ -32,33 +36,35 @@ class ThirdCategory(Base):
     owner_id = Column(Integer, ForeignKey("SecondCategory.id"))
 
 
+# 超级管理员用户表
+class AdminUser(Base):
+    __tablename__ = "AdminUser"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(255), unique=True, nullable=True, default=None)
+    encrypt_password = Column(String(255), default="", nullable=False)
+    level = Column(String(15), default="3", nullable=False)
+
+    def set_password(self, password: str):
+        self.encrypt_password = generate_password_hash(
+            password, method="pbkdf2:sha512", salt_length=64
+        )
+
+    def check_password(self, value):
+        return check_password_hash(self.encrypt_password, value)
+
+
 if __name__ == '__main__':
     from db import SessionLocal, engine
 
     Base.metadata.create_all(bind=engine)
     session = SessionLocal()
 
-    # q = session.query(FirstCategory).filter(FirstCategory.id == 1).first()
-    # for i in q.owner:
-    #     for j in i.owner:
-    #         print(j.category_name)
-    import json
-
-    data = []
-    dict_ = {}
-    q = session.query(FirstCategory).all()
-    for every_first_category in q:
-        dict_.update({"categoryName": every_first_category.category_name,
-                      "categoryId": every_first_category.id,
-                      "categoryChild": []})
-        for i, every_second_category in enumerate(every_first_category.owner):
-            dict_["categoryChild"].append({"categoryName": every_second_category.category_name,
-                                           "categoryId": every_second_category.id,
-                                           "categoryChild": []})
-            for every_third_category in every_second_category.owner:
-                dict_["categoryChild"][i]["categoryChild"].append({"categoryName": every_third_category.category_name,
-                                                                   "categoryId": every_third_category.id,
-                                                                   })
-        data.append(dict_)
-        dict_ = {}
-    print(data)
+    admin_user = AdminUser(username="Julia",
+                           encrypt_password="linwan",
+                           level="3")
+    # 对管理员的密码进行加密
+    admin_user.set_password("linwan")
+    session.add(admin_user)
+    session.commit()
+    print("超级管理员创建成功！")

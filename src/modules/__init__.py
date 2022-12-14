@@ -4,3 +4,5 @@
 from .ordinary_users import UserLogin, UserRegister, ValidatePhone, ValidateEditPassword
 from .goods_manage import ValidateList
 from .trade_manage import SubmitOrder
+
+from .background_management import admin_user_router
