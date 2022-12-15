@@ -3,7 +3,7 @@ from . import schemas
 from nosql_db import r_5
 from db import SessionLocal, AdminUser
 from utils import success, customize_error_response, create_numbering, DoubleTokenAccess
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Header
 
 session = SessionLocal()
 router = APIRouter(
@@ -48,5 +48,22 @@ async def admin_user_login(login_info: schemas.ValAdminLogin):
     status.HTTP_200_OK: {"description": "Success"}
 }, dependencies=[Depends(DoubleTokenAccess.val_refresh_token)])
 async def get_admin_info(admin_name: str = Depends(DoubleTokenAccess.val_access_token)):
-    data = {"name": admin_name}
+    admin_info: AdminUser = session.query(AdminUser).filter(AdminUser.username == admin_name).first()
+    data = {
+        "name": admin_info.username,
+        "level": admin_info.level,
+        "avatar": None
+    }
+
     return success(data)
+
+
+# 后台管理系统退出登录的接口
+@router.get("/acl/index/logout", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, dependencies=[Depends(DoubleTokenAccess.val_refresh_token)])
+async def admin_logout(admin_name: str = Depends(DoubleTokenAccess.val_access_token)):
+    # 在redis里删除相关的token信息
+    await DoubleTokenAccess.delete_double_token(admin_name)
+
+    return success(None)

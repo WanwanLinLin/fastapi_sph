@@ -28,5 +28,5 @@ r_4 = redis.Redis(connection_pool=pool_4)
 r_5 = redis.Redis(connection_pool=pool_5)
 
 if __name__ == '__main__':
-    x = r_5.get("111")
-    print(x)
+
+    print(r_5.keys(pattern="refresh-Julia*"))

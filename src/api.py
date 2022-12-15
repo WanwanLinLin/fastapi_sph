@@ -12,7 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from modules import (ValidateList, UserLogin, UserRegister, ValidatePhone, ValidateEditPassword,
                      SubmitOrder)
-from modules import admin_user_router
+from modules import admin_user_router, admin_manage_category_router
 from utils import verify_jwt_access, get_user_jwt
 
 Base.metadata.create_all(bind=engine)
@@ -21,6 +21,7 @@ app = FastAPI()
 
 # 注册管理员路由
 app.include_router(admin_user_router)
+app.include_router(admin_manage_category_router)
 
 """
 用127.0.0.1要比localhost快得多
