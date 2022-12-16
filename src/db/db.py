@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:123456@172.23.58.136:3306/sph_fastapi?charset=utf8"
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:123456@172.27.190.168:3306/sph_fastapi?charset=utf8"
 # 出租屋的mysql
 # SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:2298315584@127.0.0.1:3306/sph_fastapi?charset=utf8"
 
