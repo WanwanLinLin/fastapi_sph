@@ -5,5 +5,7 @@ from .ordinary_users import UserLogin, UserRegister, ValidatePhone, ValidateEdit
 from .goods_manage import ValidateList
 from .trade_manage import SubmitOrder
 
+# 后台管理模块不做微服务
 from .background_management import (admin_user_router, admin_manage_category_router,
-                                    admin_file_manage_router)
+                                    admin_file_manage_router, admin_manage_sku_router,
+                                    admin_manage_spu_router, admin_manage_trademark_router)

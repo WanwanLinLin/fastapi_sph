@@ -5,14 +5,14 @@ import uvicorn
 
 from typing import Union
 from fastapi import FastAPI, status, Depends, Header
-# from modules import users_router
 from db import Base, engine
 from fastapi.responses import PlainTextResponse, JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from modules import (ValidateList, UserLogin, UserRegister, ValidatePhone, ValidateEditPassword,
                      SubmitOrder)
-from modules import (admin_user_router, admin_manage_category_router, admin_file_manage_router)
+from modules import (admin_user_router, admin_manage_category_router, admin_file_manage_router,
+                     admin_manage_sku_router, admin_manage_spu_router, admin_manage_trademark_router)
 from utils import verify_jwt_access, get_user_jwt
 
 Base.metadata.create_all(bind=engine)
@@ -23,6 +23,9 @@ app = FastAPI()
 app.include_router(admin_user_router)
 app.include_router(admin_manage_category_router)
 app.include_router(admin_file_manage_router)
+app.include_router(admin_manage_sku_router)
+app.include_router(admin_manage_spu_router)
+app.include_router(admin_manage_trademark_router)
 
 """
 用127.0.0.1要比localhost快得多
