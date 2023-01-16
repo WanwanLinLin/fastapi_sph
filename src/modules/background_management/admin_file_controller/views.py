@@ -20,9 +20,28 @@ router = APIRouter(
     status.HTTP_200_OK: {"description": "Success"}
 }, dependencies=[Depends(DoubleTokenAccess.val_refresh_token),
                  Depends(DoubleTokenAccess.val_access_token)])
-async def upload_file_by_user(file_: UploadFile):
+async def upload_trademark_file_by_user(file_: UploadFile):
     path_to_save_database = f"http://127.0.0.1:8000/static/trademark/{file_.filename}"
     real_file_path = os.path.join(TRADEMARK_PATH, file_.filename)
+    if os.path.exists(real_file_path):
+        customize_error_response(code=400,
+                                 error_message="Storage failed! The file already exists!")
+
+    # 保存上传的文件
+    file_content = file_.file.read()
+    with open(real_file_path, 'wb') as f:
+        f.write(file_content)
+
+    return success(path_to_save_database)
+
+
+@router.post("/fileUpload_2", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, dependencies=[Depends(DoubleTokenAccess.val_refresh_token),
+                 Depends(DoubleTokenAccess.val_access_token)])
+async def upload_category_file_by_user(file_: UploadFile):
+    path_to_save_database = f"http://127.0.0.1:8000/static/category/{file_.filename}"
+    real_file_path = os.path.join(CATEGORY_PATH, file_.filename)
     if os.path.exists(real_file_path):
         customize_error_response(code=400,
                                  error_message="Storage failed! The file already exists!")

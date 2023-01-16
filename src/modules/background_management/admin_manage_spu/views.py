@@ -13,7 +13,7 @@ from utils import success, customize_error_response, create_numbering, DoubleTok
 session = SessionLocal()
 router = APIRouter(
     prefix="/v1/admin/spuManagement",
-    tags=["manage SKU module"],
+    tags=["manage SPU module"],
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
 

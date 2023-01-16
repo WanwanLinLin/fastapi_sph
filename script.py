@@ -12,6 +12,7 @@ def run_service(task_):
     os.system(task_)
 
 
-with ThreadPoolExecutor(max_workers=5) as executor:
-    for i in task_list:
-        executor.submit(run_service, i)
+if __name__ == '__main__':
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        for i in task_list:
+            executor.submit(run_service, i)
