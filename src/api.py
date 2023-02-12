@@ -1,23 +1,24 @@
 # -*- coding：utf-8 -*-
-import json
-import requests
-import uvicorn
-
 from typing import Union
+
+import requests
 from fastapi import FastAPI, status, Depends, Header
-from db import Base, engine
-from fastapi.responses import PlainTextResponse, JSONResponse
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from modules import (ValidateList, UserLogin, UserRegister, ValidatePhone, ValidateEditPassword,
-                     SubmitOrder)
+from db import Base, engine
+from modules import (ValidateList, UserLogin, UserRegister, SubmitOrder, SubmitSecKillOrder)
 from modules import (admin_user_router, admin_manage_category_router, admin_file_manage_router,
                      admin_manage_sku_router, admin_manage_spu_router, admin_manage_trademark_router)
+from setting import Static_PATH
 from utils import verify_jwt_access, get_user_jwt
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+# 配置静态文件
+app.mount("/static", StaticFiles(directory=Static_PATH), name="static")
 
 # 注册管理员路由
 app.include_router(admin_user_router)
@@ -32,13 +33,16 @@ app.include_router(admin_manage_trademark_router)
 """
 
 # 商品管理微服务
-GOODS_SERVICE_URL = "http://127.0.0.1:6666"
+GOODS_SERVICE_URL = "http://127.0.0.1:6666/v1/goods"
 
 # 用户管理微服务
-USERS_SERVICE_URL = "http://127.0.0.1:6667"
+USERS_SERVICE_URL = "http://127.0.0.1:6667/v1/users"
 
 # 商品交易管理微服务
-TRADE_SERVICE_URL = "http://127.0.0.1:6668"
+TRADE_SERVICE_URL = "http://127.0.0.1:6668/v1/goods"
+
+# 商品秒杀管理微服务
+GOODS_SECKILL_URL = "http://127.0.0.1:6669/v1/seckill"
 
 
 # 重写HTTPException处理程序
@@ -334,5 +338,27 @@ async def show_order_in_personal_center(page: str, limit: str,
 
     result = requests.get(url=f"{TRADE_SERVICE_URL}/order/auth/{page}/{limit}",
                           headers=headers)
+
+    return result.json()
+
+
+# ############################################## 构建商品秒杀管理微服务 ###################################################
+
+# 用户秒杀商品的接口
+@app.post("/v1/seckill/rushPurchase", responses={
+    status.HTTP_200_OK: {"description": "Success"}
+}, tags=["seckill module"])
+async def submit_seckill_order(seckill_info: SubmitSecKillOrder, x_token: str = Depends(get_user_jwt)):
+    headers = {
+        "x-token": x_token
+    }
+    data = {
+        "id": seckill_info.id,
+        "goods_name": seckill_info.goods_name,
+        "seckill_price": seckill_info.seckill_price
+    }
+
+    result = requests.post(url=f"{GOODS_SECKILL_URL}/rushPurchase",
+                           headers=headers, json=data)
 
     return result.json()

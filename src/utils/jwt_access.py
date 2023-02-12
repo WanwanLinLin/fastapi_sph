@@ -1,12 +1,12 @@
 # -*- coding：utf-8 -*-
-import redis
 from typing import Union
-from jose import JWTError, jwt
-from datetime import datetime, timedelta
+
+import redis
 from fastapi import status, HTTPException, Depends, Header
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from pydantic import BaseModel
-from pymongo import mongo_client
+
 from nosql_db import r
 
 SECRET_KEY = "wanwanlinlinptyshijbeibasailuoajulia111"

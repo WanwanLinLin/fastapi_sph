@@ -22,7 +22,7 @@ async def http_exception_handler(request, exc):
     return JSONResponse(exc.detail, status_code=exc.status_code)
 
 
-@users_app.post("/passport/login", responses={
+@users_app.post("/v1/users/passport/login", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["users module"])
 async def login(info: schemas.UserLogin):
@@ -41,7 +41,7 @@ async def login(info: schemas.UserLogin):
 
 
 # 用户登录成功后获取用户信息的接口
-@users_app.get("/passport/auth/getUserInfo", responses={
+@users_app.get("/v1/users/passport/auth/getUserInfo", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["users module"])
 async def get_user_info(username: str = Depends(verify_jwt_access)):
@@ -61,7 +61,7 @@ async def get_user_info(username: str = Depends(verify_jwt_access)):
 
 
 # 用户退出登录后清除用户信息的接口
-@users_app.get("/passport/logout", responses={
+@users_app.get("/v1/users/passport/logout", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["users module"])
 async def logout(username: str = Depends(verify_jwt_access)):
@@ -70,7 +70,7 @@ async def logout(username: str = Depends(verify_jwt_access)):
 
 
 # 新用户注册的接口
-@users_app.post("/passport/register", responses={
+@users_app.post("/v1/users/passport/register", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["users module"])
 async def register(new_user_info: schemas.UserRegister):
@@ -91,7 +91,7 @@ async def register(new_user_info: schemas.UserRegister):
 
 
 # 获取注册验证码的接口
-@users_app.get("/passport/sendCode/{phone}", responses={
+@users_app.get("/v1/users/passport/sendCode/{phone}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["users module"])
 async def send_a_code_to_phone(phone: str):
@@ -110,7 +110,7 @@ async def send_a_code_to_phone(phone: str):
 
 
 # 修改用户密码的接口
-@users_app.put("/passport/edit_password", responses={
+@users_app.put("/v1/users/passport/edit_password", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["users module"])
 def edit_password(password_info: schemas.ValidateEditPassword, username: str = Depends(verify_jwt_access)):
@@ -124,7 +124,7 @@ def edit_password(password_info: schemas.ValidateEditPassword, username: str = D
 
 
 # 用于测试JWT的接口
-@users_app.get("/testjwt", dependencies=[Depends(verify_jwt_access)])
+@users_app.get("/v1/users/testjwt", dependencies=[Depends(verify_jwt_access)])
 async def mimi(username: str = Depends(verify_jwt_access)):
     return {
         "message": "token access!",

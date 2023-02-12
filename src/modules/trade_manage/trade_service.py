@@ -1,23 +1,21 @@
 # -*- coding：utf-8 -*-
-import math
-import re
-import time
 import json
-import random
-import uvicorn
-import schemas
-
-from typing import Union
-from nosql_db import r, r_2, r_4
-from models import (Orders, Portfolios, NFT_list, Comments,
-                    Portfolios_like, Shipping_address, User, Goods_se_details_sku)
-from fastapi.responses import PlainTextResponse, JSONResponse
-from fastapi import Depends, HTTPException, status, FastAPI, Header
-from utils import (verify_password, create_access_token, verify_jwt_access, success,
-                   customize_error_response, get_password_hash, get_user_jwt, create_numbering,
-                   get_order_code)
-from starlette.exceptions import HTTPException as StarletteHTTPException
+import math
+import time
 from datetime import datetime, timedelta
+from typing import Union
+
+import uvicorn
+from fastapi import Depends, status, FastAPI, Header
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+import schemas
+from models import (Orders, Shipping_address, User, Goods_se_details_sku)
+from nosql_db import r_2
+from utils import (verify_jwt_access, success,
+                   customize_error_response, get_user_jwt, create_numbering,
+                   get_order_code)
 
 trade_app = FastAPI()
 
@@ -30,7 +28,7 @@ async def http_exception_handler(request, exc):
 
 
 # 增加订单的接口
-@trade_app.get("/addToCart/{sku_id}/{sku_num}", responses={
+@trade_app.get("/v1/goods/addToCart/{sku_id}/{sku_num}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def add_to_cart(sku_id: str, sku_num: str,
@@ -165,7 +163,7 @@ async def add_to_cart(sku_id: str, sku_num: str,
 
 
 # 查询购物车中订单的接口
-@trade_app.get("/cartList", responses={
+@trade_app.get("/v1/goods/cartList", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def query_cart_list(userTempId: str = Header(),
@@ -187,7 +185,7 @@ async def query_cart_list(userTempId: str = Header(),
 
 
 # 删除购物车中商品的接口
-@trade_app.delete("/deleteCart/{sku_id}", responses={
+@trade_app.delete("/v1/goods/deleteCart/{sku_id}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def cancel_order_in_cart(sku_id: str, userTempId: str = Header(),
@@ -210,7 +208,7 @@ async def cancel_order_in_cart(sku_id: str, userTempId: str = Header(),
 
 
 # 切换订单中商品选中状态的接口
-@trade_app.get("/checkCart/{sku_id}/{is_checked}", responses={
+@trade_app.get("/v1/goods/checkCart/{sku_id}/{is_checked}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def switch_commodity_selection_status(sku_id: str, is_checked: str,
@@ -229,7 +227,7 @@ async def switch_commodity_selection_status(sku_id: str, is_checked: str,
 
 
 # 生成并获取订单交易页信息的接口(需要权限认证)
-@trade_app.get("/auth/trade", responses={
+@trade_app.get("/v1/goods/auth/trade", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def get_order_transaction_information(username: str = Depends(verify_jwt_access),
@@ -296,7 +294,7 @@ async def get_order_transaction_information(username: str = Depends(verify_jwt_a
 
 
 # 提交订单的接口
-@trade_app.post("/auth/submitOrder", responses={
+@trade_app.post("/v1/goods/auth/submitOrder", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def get_order_transaction_information(tradeNo: str,
@@ -323,7 +321,7 @@ async def get_order_transaction_information(tradeNo: str,
 
 
 # 获取订单支付信息的接口
-@trade_app.get("/payment/weixin/createNative/{order_id}", responses={
+@trade_app.get("/v1/goods/payment/weixin/createNative/{order_id}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"], dependencies=[Depends(verify_jwt_access)])
 async def get_order_payment_info(order_id: str):
@@ -346,7 +344,7 @@ async def get_order_payment_info(order_id: str):
 
 
 # 查询订单支付状态的接口
-@trade_app.get("/weixin/queryPayStatus/{order_id}", responses={
+@trade_app.get("/v1/goods/weixin/queryPayStatus/{order_id}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"], dependencies=[Depends(verify_jwt_access)])
 async def check_pay_status(order_id: str):
@@ -360,7 +358,7 @@ async def check_pay_status(order_id: str):
 
 
 # 在个人中心展示订单列表的接口
-@trade_app.get("/order/auth/{page}/{limit}", responses={
+@trade_app.get("/v1/goods/order/auth/{page}/{limit}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def show_order_in_personal_center(page: str, limit: str,
