@@ -32,6 +32,8 @@ app.include_router(admin_manage_trademark_router)
 用127.0.0.1要比localhost快得多
 """
 
+# #TODO 以下请求均用于测试
+TEST_PREFIX = "api/test"
 # 商品管理微服务
 GOODS_SERVICE_URL = "http://127.0.0.1:6666/v1/goods"
 
@@ -59,7 +61,7 @@ async def main():
 
 # ############################################## 构建商品微服务 ###################################################
 # 返回所有类别列表数据(三级联动)的接口
-@app.get("/v1/goods/getBaseCategoryList", responses={
+@app.get(f"/{TEST_PREFIX}/goods/getBaseCategoryList", responses={
     status.HTTP_200_OK: {"description": "Success"}}, tags=["Manage goods module"])
 def get_base_category_list():
     result = requests.get(url=f"{GOODS_SERVICE_URL}/getBaseCategoryList")
@@ -68,7 +70,7 @@ def get_base_category_list():
 
 
 # 展示商品列表的接口
-@app.post("/v1/goods/list", responses={
+@app.post(f"/{TEST_PREFIX}/goods/list", responses={
     status.HTTP_200_OK: {"description": "Success"}}, tags=["Manage goods module"])
 def display_goods_list(goods_info: ValidateList):
     data = {
@@ -90,7 +92,7 @@ def display_goods_list(goods_info: ValidateList):
 
 
 # 展示商品详情的接口
-@app.get("/v1/goods/item/{sku_id}", responses={
+@app.get(f"/{TEST_PREFIX}/goods/item/{{sku_id}}", responses={
     status.HTTP_200_OK: {"description": "Success"}}, tags=["Manage goods module"])
 def show_goods_detail(sku_id: int):
     result = requests.get(url=f"{GOODS_SERVICE_URL}/item/{sku_id}")
@@ -100,7 +102,7 @@ def show_goods_detail(sku_id: int):
 
 # ############################################## 构建用户微服务 ###################################################
 # 用户登录的接口
-@app.post("/v1/users/passport/login", responses={
+@app.post(f"/{TEST_PREFIX}/users/passport/login", responses={
     status.HTTP_200_OK: {"description": "Success"}},
           tags=["users module"])
 def login(info: UserLogin):
@@ -114,7 +116,7 @@ def login(info: UserLogin):
 
 
 # 用户登录成功后获取用户信息的接口
-@app.get("/v1/users/passport/auth/getUserInfo", responses={
+@app.get(f"/{TEST_PREFIX}/users/passport/auth/getUserInfo", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["users module"], dependencies=[Depends(verify_jwt_access)])
 async def get_user_info(x_token: str = Depends(get_user_jwt)):
@@ -128,7 +130,7 @@ async def get_user_info(x_token: str = Depends(get_user_jwt)):
 
 
 # 用户退出登录后清除用户信息的接口
-@app.get("/v1/users/passport/logout", responses={
+@app.get(f"/{TEST_PREFIX}/users/passport/logout", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["users module"], dependencies=[Depends(verify_jwt_access)])
 async def get_user_info(x_token: str = Depends(get_user_jwt)):
@@ -143,7 +145,7 @@ async def get_user_info(x_token: str = Depends(get_user_jwt)):
 
 
 # 新用户注册的接口
-@app.post("/v1/users/passport/register", responses={
+@app.post(f"/{TEST_PREFIX}/users/passport/register", responses={
     status.HTTP_200_OK: {"description": "Success"}},
           tags=["users module"])
 async def register(new_user: UserRegister):
@@ -165,7 +167,7 @@ async def register(new_user: UserRegister):
 
 
 # 修改用户密码的接口
-@app.put("/v1/users/passport/edit_password", responses={
+@app.put(f"/{TEST_PREFIX}/users/passport/edit_password", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["users module"], dependencies=[Depends(verify_jwt_access)])
 async def get_user_info(x_token: str = Depends(get_user_jwt)):
@@ -182,7 +184,7 @@ async def get_user_info(x_token: str = Depends(get_user_jwt)):
 # ############################################## 构建交易管理微服务 ###################################################
 
 # 增加订单的接口
-@app.get("/v1/goods/addToCart/{sku_id}/{sku_num}", responses={
+@app.get(f"/{TEST_PREFIX}/goods/addToCart/{{sku_id}}/{{sku_num}}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def add_to_cart(sku_id: str, sku_num: str,
@@ -200,7 +202,7 @@ async def add_to_cart(sku_id: str, sku_num: str,
 
 
 # 查询购物车中订单的接口
-@app.get("/v1/goods/cartList", responses={
+@app.get(f"/{TEST_PREFIX}/goods/cartList", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def query_cart_list(userTempId: str = Header(),
@@ -217,7 +219,7 @@ async def query_cart_list(userTempId: str = Header(),
 
 
 # 删除购物车中商品的接口
-@app.delete("/v1/goods/deleteCart/{sku_id}", responses={
+@app.delete(f"/{TEST_PREFIX}/goods/deleteCart/{{sku_id}}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def cancel_order_in_cart(sku_id: str, userTempId: str = Header(),
@@ -234,7 +236,7 @@ async def cancel_order_in_cart(sku_id: str, userTempId: str = Header(),
 
 
 # 切换订单中商品选中状态的接口
-@app.get("/v1/goods/checkCart/{sku_id}/{is_checked}", responses={
+@app.get(f"/{TEST_PREFIX}/goods/checkCart/{{sku_id}}/{{is_checked}}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def switch_commodity_selection_status(sku_id: str, is_checked: str,
@@ -252,7 +254,7 @@ async def switch_commodity_selection_status(sku_id: str, is_checked: str,
 
 
 # 生成并获取订单交易页信息的接口(需要权限认证)
-@app.get("/v1/goods/auth/trade", responses={
+@app.get(f"/{TEST_PREFIX}/goods/auth/trade", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def get_order_transaction_information(x_token: str = Depends(get_user_jwt)):
@@ -267,7 +269,7 @@ async def get_order_transaction_information(x_token: str = Depends(get_user_jwt)
 
 
 # 提交订单的接口
-@app.post("/v1/goods/auth/submitOrder", responses={
+@app.post(f"/{TEST_PREFIX}/goods/auth/submitOrder", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def get_order_transaction_information(tradeNo: str,
@@ -297,7 +299,7 @@ async def get_order_transaction_information(tradeNo: str,
 
 
 # 获取订单支付信息的接口
-@app.get("/v1/goods/payment/weixin/createNative/{order_id}", responses={
+@app.get(f"/{TEST_PREFIX}/goods/payment/weixin/createNative/{{order_id}}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def get_order_payment_info(order_id: str, x_token: str = Depends(get_user_jwt)):
@@ -312,7 +314,7 @@ async def get_order_payment_info(order_id: str, x_token: str = Depends(get_user_
 
 
 # 查询订单支付状态的接口
-@app.get("/v1/goods/weixin/queryPayStatus/{order_id}", responses={
+@app.get(f"/{TEST_PREFIX}/goods/weixin/queryPayStatus/{{order_id}}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def check_pay_status(order_id: str, x_token: str = Depends(get_user_jwt)):
@@ -327,7 +329,7 @@ async def check_pay_status(order_id: str, x_token: str = Depends(get_user_jwt)):
 
 
 # 在个人中心展示订单列表的接口
-@app.get("/v1/goods/order/auth/{page}/{limit}", responses={
+@app.get(f"/{TEST_PREFIX}/goods/order/auth/{{page}}/{{limit}}", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["trade module"])
 async def show_order_in_personal_center(page: str, limit: str,
@@ -345,7 +347,7 @@ async def show_order_in_personal_center(page: str, limit: str,
 # ############################################## 构建商品秒杀管理微服务 ###################################################
 
 # 用户秒杀商品的接口
-@app.post("/v1/seckill/rushPurchase", responses={
+@app.post(f"/{TEST_PREFIX}/seckill/rushPurchase", responses={
     status.HTTP_200_OK: {"description": "Success"}
 }, tags=["seckill module"])
 async def submit_seckill_order(seckill_info: SubmitSecKillOrder, x_token: str = Depends(get_user_jwt)):

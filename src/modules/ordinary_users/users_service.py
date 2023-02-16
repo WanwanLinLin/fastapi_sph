@@ -132,4 +132,4 @@ async def mimi(username: str = Depends(verify_jwt_access)):
     }
 
 if __name__ == '__main__':
-    uvicorn.run(users_app, port=6667)
+    uvicorn.run(users_app, port=8112)

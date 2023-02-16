@@ -6,8 +6,7 @@ task_list = ['python src/run.py',
              'python src/modules/goods_manage/goods_service.py',
              'python src/modules/ordinary_users/users_service.py',
              'python src/modules/trade_manage/trade_service.py',
-             'python src/modules/time_limited_seckill/seckill_service.py',
-             'python src/modules/time_limited_seckill/customCommunication.py']
+             'python src/modules/time_limited_seckill/seckill_service.py',]
 
 
 def run_service(task_):

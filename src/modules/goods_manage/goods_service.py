@@ -24,7 +24,7 @@ async def http_exception_handler(request, exc):
 
 
 # 返回所有类别列表数据(三级联动)的接口
-@goods_app.get('/getBaseCategoryList', responses={
+@goods_app.get('/v1/goods/getBaseCategoryList', responses={
     status.HTTP_200_OK: {"description": "Success"}
 })
 async def get_base_category_list():
@@ -50,7 +50,7 @@ async def get_base_category_list():
 
 
 # 展示商品列表的接口
-@goods_app.post('/list', responses={
+@goods_app.post('/v1/list', responses={
     status.HTTP_200_OK: {"description": "Success"}
 })
 async def display_goods_list(get_list_info: schemas.ValidateList):
@@ -230,7 +230,7 @@ async def display_goods_list(get_list_info: schemas.ValidateList):
 
 
 # 展示商品详情的接口
-@goods_app.get('/item/{sku_id}', responses={
+@goods_app.get('/v1/item/{sku_id}', responses={
     status.HTTP_200_OK: {"description": "Success"}
 })
 async def show_goods_detail(sku_id: int):
